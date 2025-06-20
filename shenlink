@@ -1,0 +1,68 @@
+<?php
+
+declare(strict_types=1);
+
+class Shenlink
+{
+    private array $commands = [];
+
+    public function __construct()
+    {
+        $this->registerCommand('-h', [$this, 'handleHelpCommand']);
+        $this->registerCommand('--help', [$this, 'handleHelpCommand']);
+        $this->registerCommand('test', [$this, 'handleTestCommand']);
+    }
+
+    public function registerCommand($name, $handler): void
+    {
+        $this->commands[$name] = $handler;
+    }
+
+    public function run(array $argv): void
+    {
+        if (count($argv) < 2) {
+            $this->handleHelpCommand();
+            return;
+        }
+
+        $command = $argv[1];
+
+        if (!isset($this->commands[$command])) {
+            echo "命令未找到: $command\n";
+            $this->handleHelpCommand();
+            return;
+        }
+        call_user_func($this->commands[$command]);
+    }
+
+    private function handleHelpCommand(): void
+    {
+        $this->showHelpInfo();
+    }
+
+    private function handleTestCommand(): void
+    {
+        echo "running tests...\n";
+
+        // 调用 PHPUnit 执行测试
+        $phpunitCommand = __DIR__ . '/vendor/bin/phpunit';
+        $output = shell_exec($phpunitCommand);
+
+        if ($output === null) {
+            echo "错误: 无法执行 PHPUnit。请确保已正确安装 PHPUnit ，并配置好 phpunit.xml 。\n";
+            echo "使用的命令: $phpunitCommand\n";
+        } else {
+            echo $output;
+        }
+    }
+
+    private function showHelpInfo(): void
+    {
+        echo "可用命令:\n";
+        echo "  -h, --help - 显示帮助信息\n";
+        echo "  test - 运行测试\n";
+    }
+}
+
+$shenlink = new Shenlink();
+$shenlink->run($argv);
