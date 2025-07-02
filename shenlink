@@ -2,10 +2,21 @@
 
 declare(strict_types=1);
 
+/**
+ * Shenlink 类提供了一个简单的命令行接口，用于执行预定义的命令。
+ */
 class Shenlink
 {
+    /**
+     * 存储注册的命令及其对应的处理函数。
+     *
+     * @var array<string, callable>
+     */
     private array $commands = [];
 
+    /**
+     * 构造函数，初始化默认命令。
+     */
     public function __construct()
     {
         $this->registerCommand('-h', [$this, 'handleHelpCommand']);
@@ -13,11 +24,22 @@ class Shenlink
         $this->registerCommand('test', [$this, 'handleTestCommand']);
     }
 
-    public function registerCommand($name, $handler): void
+    /**
+     * 注册一个新的命令及其处理函数。
+     *
+     * @param string $name 命令名称。
+     * @param callable $handler 处理该命令的可调用对象。
+     */
+    public function registerCommand(string $name, callable $handler): void
     {
         $this->commands[$name] = $handler;
     }
 
+    /**
+     * 运行指定的命令。
+     *
+     * @param array<string> $argv 命令行参数数组。
+     */
     public function run(array $argv): void
     {
         if (count($argv) < 2) {
@@ -35,11 +57,17 @@ class Shenlink
         call_user_func($this->commands[$command]);
     }
 
+    /**
+     * 处理帮助命令，显示帮助信息。
+     */
     private function handleHelpCommand(): void
     {
         $this->showHelpInfo();
     }
 
+    /**
+     * 处理测试命令，运行 PHPUnit 测试。
+     */
     private function handleTestCommand(): void
     {
         echo "running tests...\n";
@@ -56,6 +84,9 @@ class Shenlink
         }
     }
 
+    /**
+     * 显示可用命令的帮助信息。
+     */
     private function showHelpInfo(): void
     {
         echo "可用命令:\n";
