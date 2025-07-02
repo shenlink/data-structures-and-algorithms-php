@@ -23,6 +23,7 @@ class Shenlink
         $this->registerCommand('-h', [$this, 'handleHelpCommand']);
         $this->registerCommand('--help', [$this, 'handleHelpCommand']);
         $this->registerCommand('test', [$this, 'handleTestCommand']);
+        $this->registerCommand('push', [$this, 'handlePushCommand']);
     }
 
     /**
@@ -71,17 +72,22 @@ class Shenlink
      */
     private function handleTestCommand(): void
     {
-        echo "running tests...\n";
+        $exitCode = 0;
+        $this->runTestCommand($exitCode);
+    }
 
-        // 调用 PHPUnit 执行测试
-        $phpunitCommand = __DIR__ . '/vendor/bin/phpunit';
-        $output = shell_exec($phpunitCommand);
-
-        if ($output === null) {
-            echo "错误: 无法执行 PHPUnit。请确保已正确安装 PHPUnit ，并配置好 phpunit.xml 。\n";
-            echo "使用的命令: $phpunitCommand\n";
+    /**
+     * 处理推送命令，先测试，测试跳过后，才会推送到 gitee 和 github 。
+     */
+    private function handlePushCommand(): void
+    {
+        $exitCode = 0;
+        $this->runTestCommand($exitCode);
+        if ($exitCode !== 0) {
+            echo "PHPUnit tests failed. Not pushing to repositories.";
         } else {
-            echo $output;
+            $this->runPushCommand('git push origin master');
+            $this->runPushCommand('git push github master');
         }
     }
 
@@ -93,6 +99,40 @@ class Shenlink
         echo "可用命令:\n";
         echo "  -h, --help - 显示帮助信息\n";
         echo "  test - 运行测试\n";
+    }
+
+    /**
+     * 运行 PHPUnit 执行测试
+     */
+    private function runTestCommand(int &$exitCode)
+    {
+        echo "running tests...\n";
+        // 调用 PHPUnit 执行测试
+        $phpunitCommand = __DIR__ . '/vendor/bin/phpunit';
+        $outputs = [];
+        exec($phpunitCommand, $outputs, $exitCode);
+        // 显示测试输出日志
+        foreach ($outputs as $output) {
+            echo $output . "\n";
+        }
+    }
+
+    /**
+     * 运行推送命令
+     */
+    private function runPushCommand(string $command): void
+    {
+        echo "running push...\n";
+        echo $command . "\n";
+        $outputs = [];
+        $exitCode = 0;
+        exec($command, $outputs, $exitCode);
+        foreach ($outputs as $output) {
+            echo $output . "\n";
+        }
+        if ($exitCode !== 0) {
+            echo "Push error：use the command: $command\n";
+        }
     }
 }
 
